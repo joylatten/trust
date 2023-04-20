@@ -55,6 +55,16 @@ func makeKeydirs(keysetPath string) error {
 	return nil
 }
 
+func generatebootkit(keysetName, keysetPath, productName string) error {
+	cmd := []string{"keysetbootkit.sh", keysetName, keysetPath, productName}
+	stdout, stderr, rc := trust.RunCommandWithOutputErrorRc(cmd...)
+	if rc != 0 {
+		return fmt.Errorf("Failed running keysetbootkit.sh:\nstderr: %s\nstdout: %s\n",
+			stderr, stdout)
+	}
+	return nil
+}
+
 func initkeyset(keysetName string, Org []string) error {
 	var caTemplate, certTemplate x509.Certificate
 	const (
@@ -165,6 +175,11 @@ func initkeyset(keysetName string, Org []string) error {
 
 	if err = generateNewUUIDCreds(keysetName, mName); err != nil {
 		return errors.Wrapf(err, "Failed creating default project keyset")
+	}
+
+	// Generate a bootkit for the keyset using keys in the keyset
+	if err = generatebootkit(keysetName, keysetPath, "default"); err != nil {
+		return errors.Wrapf(err, "Failed to create bootkit artifacts for keyset")
 	}
 
 	return nil
